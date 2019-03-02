@@ -1,0 +1,46 @@
+version: '2'
+
+services:
+  zookeeper:
+    image: wurstmeister/zookeeper
+    networks:
+      localnet:
+        ipv4_address: 192.168.0.2
+  kafka:
+    image: wurstmeister/kafka:latest
+    ports:
+      - "9092:9092"
+    environment:
+      KAFKA_ADVERTISED_HOST_NAME: kafka
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    networks:
+      localnet:
+        ipv4_address: 192.168.0.3
+  jupyter:
+    image: mnagaku/lc-minimal-notebook
+    ports:
+      - "8888:8888"
+    command: bash -c "git clone --depth 1 https://github.com/mnagaku/kafka-test.git ; set +u ; . /usr/local/bin/start.sh jupyter notebook --NotebookApp.token=''"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    networks:
+      localnet:
+        ipv4_address: 192.168.0.4
+    extra_hosts:
+      - "kafka0:192.168.2.100"
+      - "kafka1:192.168.2.101"
+      - "kafka2:192.168.2.102"
+      - "kafka0.vcp-handson.org:52.194.124.41"
+      - "kafka1.vcp-handson.org:52.194.124.41"
+      - "kafka2.vcp-handson.org:52.194.124.41"
+
+networks:
+  localnet:
+    driver: bridge
+    ipam:
+      driver: default
+      config:
+      - subnet: 192.168.0.0/24
+        gateway: 192.168.0.1
